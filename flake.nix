@@ -55,6 +55,8 @@
           nil         # LSP (nix language server)
           just        # 任务运行器 (justfile)
           nix         # 包管理器自身, 保证 devShell 内 nix 版本可控
+          jq          # 巡检脚本 scripts/verify-mirrors.sh 用: 解析 nix eval --json 输出
+          curl        # 巡检脚本用: HTTP HEAD 探测镜像可用性
         ];
 
         # === checks.mirrors-module-eval ===

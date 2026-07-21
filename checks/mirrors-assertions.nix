@@ -124,8 +124,8 @@ in [
       else "false (got '${goproxy}')";
   }
   {
-    label = "GOPROXY starts with aliyun goproxy (goproxy 仅 aliyun 提供)";
-    expected = "https://mirrors.aliyun.com/goproxy/";
+    label = "GOPROXY starts with goproxy.cn";
+    expected = "https://goproxy.cn";
     actual =
       if goproxyParts != []
       then builtins.head goproxyParts

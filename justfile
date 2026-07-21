@@ -4,6 +4,7 @@
 #   just fmt     用 nix fmt (nixpkgs-fmt) 格式化所有 .nix 文件
 #   just update  更新 flake inputs
 #   just show    显示 flake outputs 结构
+#   just verify-mirrors  巡检 providers.nix 中所有镜像 URL 的可达性
 
 # 一键验证: lint (deadnix + statix) → nix flake check (含模块 eval 断言)
 # 用法: just check
@@ -43,3 +44,17 @@ update:
 # 说明: 列出所有 nixosModules / checks / devShells / formatter 等顶层输出.
 show:
     nix flake show
+
+# 镜像 URL 可用性巡检
+# 用法: just verify-mirrors
+# 说明: 从 module/providers.nix (SSOT) 提取所有 url, 并发 HEAD 检测可达性,
+#       报告失效项 (红色). 0=全部可达, 1=有失效项.
+#       适合在更新 providers.nix 后跑一次确认 URL 仍可达.
+verify-mirrors:
+    ./scripts/verify-mirrors.sh
+
+# 镜像 URL 巡检 (静默模式, 只输出失效项)
+# 用法: just verify-mirrors-quiet
+# 说明: 同 verify-mirrors, 但只输出失效项, 适合 CI 或管道下游消费.
+verify-mirrors-quiet:
+    ./scripts/verify-mirrors.sh --quiet

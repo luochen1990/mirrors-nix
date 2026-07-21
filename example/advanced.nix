@@ -14,9 +14,9 @@ _: {
     enable = true;
 
     # --- 场景 1: 自定义全局 provider 偏好顺序 ---
-    # 默认是 ["tuna" "ustc" "aliyun" ...], 这里改为 ustc 优先, tuna 回退
+    # 默认是 ["tuna" "ustc" "aliyun" ... "goproxy-cn" "goproxy-io" ...], 这里改为 ustc 优先, tuna 回退
     # 若引入了自定义 provider (见场景 3), 通常把它放到列表最前
-    providers = ["my-cache" "ustc" "tuna" "aliyun" "tencent" "bfsu" "sjtu" "daocloud" "hf-mirror"];
+    providers = ["my-cache" "ustc" "tuna" "aliyun" "tencent" "bfsu" "sjtu" "goproxy-cn" "goproxy-io" "daocloud" "hf-mirror"];
 
     # --- 场景 2: 逐软件覆盖 ---
     # 仅 pip 的偏好顺序被覆盖, 其他软件仍继承全局 mirrors.providers

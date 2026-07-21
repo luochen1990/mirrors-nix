@@ -17,11 +17,14 @@ mirrors-nix/
 │   ├── default.nix     # 模块入口, 仅做 imports 聚合
 │   ├── options.nix     # 选项定义 (mirrors.* 系列)
 │   ├── config.nix      # 配置应用 (生成 nix.settings / environment.* 等)
-│   ├── providers.nix   # 内置 provider 预设数据
+│   ├── providers.nix   # 内置 provider 预设数据 (镜像 URL SSOT)
 │   └── lib.nix         # URL 解析辅助函数 (resolveAll / resolveFirst / getUrl)
+├── checks/             # 模块 eval-time 断言数据 (供 flake.nix checks 使用)
+├── scripts/            # 辅助脚本
+│   └── verify-mirrors.sh  # 镜像 URL 可用性巡检 (从 providers.nix SSOT 提取并 HEAD 探测)
 ├── example/            # 用户示例 (minimal.nix / advanced.nix)
 ├── flake.nix           # flake 入口 (inputs/outputs/devShell/formatter)
-├── justfile            # 开发任务 (just check / just fmt / just update)
+├── justfile            # 开发任务 (just check / just fmt / just update / just verify-mirrors)
 ├── treefmt.nix         # treefmt 配置 (多语言格式化聚合)
 ├── treefmt.toml        # treefmt v2 实际生效配置 (treefmt.nix 仅作 1.x 兼容)
 ├── statix.toml         # statix 规则 (无点前缀, 见 statix.toml 头注释)
@@ -34,10 +37,11 @@ mirrors-nix/
 ## 如何本地开发
 
 ```bash
-nix develop       # 进入 devShell (含 nixpkgs-fmt / deadnix / statix / nil / just / nix)
+nix develop       # 进入 devShell (含 nixpkgs-fmt / deadnix / statix / nil / just / jq / curl / nix)
 just check        # 一键验证: lint (deadnix + statix) + nix flake check (含模块 eval 断言)
 just fmt          # 格式化 (nixpkgs-fmt + treefmt)
 just update       # 更新 flake inputs (nix flake update)
+just verify-mirrors  # 巡检 module/providers.nix 中所有镜像 URL 的可达性
 ```
 
 devShell 的工具链是 SSOT, 新增/移除工具只改 `flake.nix` 的 `devTools` 一处, `devShell` 自动跟随。

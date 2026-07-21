@@ -1,6 +1,6 @@
 # mirrors-nix
 
-> 横向统一配置各软件镜像源的 NixOS flake 模块 (tuna / ustc / aliyun / tencent / bfsu / sjtu / daocloud / hf-mirror)。
+> 横向统一配置各软件镜像源的 NixOS flake 模块 (tuna / ustc / aliyun / tencent / bfsu / sjtu / daocloud / hf-mirror / goproxy.cn / goproxy.io)。
 
 ## 动机
 
@@ -16,7 +16,7 @@
 
 ## 关键特性
 
-- **8 个内置 provider**: tuna / ustc / aliyun / tencent / bfsu / sjtu / daocloud / hf-mirror
+- **10 个内置 provider**: 6 个综合镜像站 (tuna / ustc / aliyun / tencent / bfsu / sjtu) + 4 个专用服务商 (daocloud / hf-mirror / goproxy.cn / goproxy.io)
 - **8 个软件支持**: nix / docker / goproxy / pip / npm / cargo / rustup / huggingface
 - **多镜像策略**: `nix` / `docker` / `goproxy` 收集所有匹配 provider; 其余软件取第一个匹配
 - **两层覆盖**: 逐软件 `mirrors.<software>.providers` > 全局 `mirrors.providers`
@@ -56,12 +56,14 @@ mirrors.enable = true;
 
 - 清华大学 TUNA 协会 — <https://mirrors.tuna.tsinghua.edu.cn>
 - 中国科学技术大学 USTC — <https://mirrors.ustc.edu.cn>
-- 阿里云 (含 npmmirror / goproxy) — <https://mirrors.aliyun.com>
+- 阿里云 (含 npmmirror) — <https://mirrors.aliyun.com>
 - 腾讯云 — <https://mirrors.cloud.tencent.com>
 - 北京外国语大学 BFSU — <https://mirrors.bfsu.edu.cn>
 - 上海交通大学 SJTU — <https://mirror.sjtu.edu.cn>
 - DaoCloud (docker registry 镜像) — <https://docker.m.daocloud.io>
 - hf-mirror.com (HuggingFace 独立镜像) — <https://hf-mirror.com>
+- 七牛云 (goproxy.cn) — <https://goproxy.cn>
+- goproxy.io (Go modules 社区代理) — <https://goproxy.io>
 
 **没有这些镜像站长期提供的开源服务, 本项目毫无意义。** 请在享受便利时, 也关注各镜像站的运营状况与公告。
 

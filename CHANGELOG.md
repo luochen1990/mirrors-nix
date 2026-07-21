@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/),
 adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Changed
+- goproxy: 由 aliyun 内置改为专用服务商 goproxy.cn (七牛) / goproxy.io (开源社区)
+
+### Added
+- 新增 `scripts/verify-mirrors.sh` 镜像 URL 巡检脚本 (从 `providers.nix` SSOT 提取并 HEAD 探测)
+- 新增 `just verify-mirrors` / `just verify-mirrors-quiet` 任务
+- devShell 增补 jq / curl (巡检脚本依赖)
 
 ## [0.1.0] - 2026-07-21
 ### Added

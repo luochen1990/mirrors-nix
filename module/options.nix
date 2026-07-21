@@ -39,7 +39,7 @@ in {
 
     providers = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = ["tuna" "ustc" "aliyun" "tencent" "bfsu" "sjtu" "daocloud" "hf-mirror"];
+      default = ["tuna" "ustc" "aliyun" "tencent" "bfsu" "sjtu" "goproxy-cn" "goproxy-io" "daocloud" "hf-mirror"];
       description = ''
         有序的镜像源提供商偏好列表 (preferred provider list).
         对每个软件:

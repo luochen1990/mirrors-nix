@@ -2,17 +2,12 @@
 # 每个 provider 只列它实际提供的镜像 (省略 = 不提供, lib.attrByPath 自动返回 null)
 # 每个条目是 attrset (至少含 url), 支持未来扩展 (如 trusted-public-keys)
 #
-# URL 已逐个验证可用 (2026-07-21, 见 README 答谢区); 仅保留实测可用的镜像:
-#   - goproxy 仅 aliyun 提供 (TUNA/USTC/SJTU/Tencent 公告中未提供或已下线)
-#   - rustup 在 USTC/SJTU 的官方目录是 rust-static (语义等价于 TUNA/aliyun 的 rustup)
-#   - docker 仅 daocloud 提供 (有限流); 传统镜像站 docker registry 已于 2024-06 关停
-#   - npm 仅 aliyun npmmirror 提供 (USTC npm 已于 2026-06-12 关停)
-#   - huggingface 仅 hf-mirror.com (独立服务, 非高校镜像站)
+# URL 已逐个验证可用 (验证日期与具体覆盖异常见 README 答谢区与 module/AGENTS.md 覆盖矩阵)
 #
 # 易出错点:
 # - 省略 = 不提供 (attrByPath 自动返回 null); 不要写 = null
 # - 若镜像需要额外配置 (如 nix trusted-public-keys), 在 entry attrset 中添加对应字段
-# - URL 需定期验证可用性; 已关停的镜像不收录
+# - URL 需定期验证可用性 (跑 just verify-mirrors); 已关停的镜像不收录
 #
 # 用户可通过 mirrors.providerPresets 选项添加自定义 provider 或覆盖内置属性
 # (NixOS module system 自动合并, 用户值优先级高于 default)
@@ -39,7 +34,6 @@
     npm = {url = "https://registry.npmmirror.com";};
     cargo = {url = "https://mirrors.aliyun.com/crates.io-index/";};
     rustup = {url = "https://mirrors.aliyun.com/rustup";};
-    goproxy = {url = "https://mirrors.aliyun.com/goproxy/";};
   };
 
   # 腾讯云
@@ -70,5 +64,13 @@
   # hf-mirror (仅 huggingface; 独立服务, 非镜像站)
   hf-mirror = {
     huggingface = {url = "https://hf-mirror.com";};
+  };
+
+  # Go modules proxy 专用服务商 (国内主流镜像站未提供)
+  goproxy-cn = {
+    goproxy = {url = "https://goproxy.cn";};  # 七牛运营
+  };
+  goproxy-io = {
+    goproxy = {url = "https://goproxy.io";};  # 开源社区项目
   };
 }

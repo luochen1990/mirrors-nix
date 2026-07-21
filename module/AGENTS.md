@@ -42,20 +42,26 @@ module/
 
 > 实测于 2026-07-21; 仅保留逐个验证可用的镜像 (URL 见 `providers.nix`)
 
-| 软件 \ Provider | tuna | ustc | aliyun | tencent | bfsu | sjtu | daocloud | hf-mirror |
-| - | - | - | - | - | - | - | - | - |
-| nix | Y | Y | - | - | Y | Y | - | - |
-| pypi | Y | Y | Y | Y | Y | Y | - | - |
-| npm | - | - | Y | - | - | - | - | - |
-| cargo | Y | Y | Y | - | Y | Y | - | - |
-| rustup | Y | Y | Y | - | - | Y | - | - |
-| goproxy | - | - | Y | - | - | - | - | - |
-| docker | - | - | - | - | - | - | Y | - |
-| huggingface | - | - | - | - | - | - | - | Y |
+| 软件 \ Provider | tuna | ustc | aliyun | tencent | bfsu | sjtu | daocloud | hf-mirror | goproxy-cn | goproxy-io |
+| - | - | - | - | - | - | - | - | - | - | - |
+| nix | Y | Y | - | - | Y | Y | - | - | - | - |
+| pypi | Y | Y | Y | Y | Y | Y | - | - | - | - |
+| npm | - | - | Y | - | - | - | - | - | - | - |
+| cargo | Y | Y | Y | - | Y | Y | - | - | - | - |
+| rustup | Y | Y* | Y | - | - | Y* | - | - | - | - |
+| goproxy | - | - | - | - | - | - | - | - | Y | Y |
+| docker | - | - | - | - | - | - | Y | - | - | - |
+| huggingface | - | - | - | - | - | - | - | Y | - | - |
 
+> `Y*` rustup URL 各站命名不一: USTC/SJTU 叫 `/rust-static` (镜像 static.rust-lang.org 全站),
+> TUNA/aliyun 叫 `/rustup` (只镜像 rustup 子目录); 不能假设统一前缀
+>
 > npm 镜像由阿里云 npmmirror 提供; USTC npm 于 2026-06-12 关停
+>
+> goproxy 仅由专用服务商提供 (goproxy.cn 七牛运营 / goproxy.io 开源社区项目);
+> 国内主流镜像站未提供
+>
 > docker 镜像仅 DaoCloud 可用 (有限流); 传统镜像站于 2024-06 关停
-> 其他覆盖异常 (goproxy / rustup rust-static 等) 见 `module/providers.nix` 头注释
 
 ## 用法示例
 
@@ -63,8 +69,8 @@ module/
 # 最简: 启用全部默认镜像 (tuna 优先, 逐级回退)
 mirrors.enable = true;
 
-# 自定义全局 provider 偏好顺序
-mirrors.providers = ["ustc" "tuna" "aliyun" "daocloud" "hf-mirror"];
+# 自定义全局 provider 偏好顺序 (示例: 省略 daocloud / hf-mirror / goproxy-cn / goproxy-io)
+mirrors.providers = ["ustc" "tuna" "aliyun" "tencent" "bfsu" "sjtu"];
 
 # 逐软件覆盖 provider 偏好 (不影响其他软件)
 mirrors.pip.providers = ["aliyun" "tuna"];  # pip 优先用阿里云
