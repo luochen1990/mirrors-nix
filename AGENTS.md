@@ -16,21 +16,27 @@ mirrors-nix/
 ├── module/             # 核心模块代码 (内部设计见 module/AGENTS.md)
 │   ├── default.nix     # 模块入口, 仅做 imports 聚合
 │   ├── options.nix     # 选项定义 (mirrors.* 系列)
-│   ├── config.nix      # 配置应用 (生成 nix.settings / environment.* 等)
+│   ├── config.nix      # 配置应用 (生成 nix.settings / environment.* 等, 并注入内置 providerPresets)
 │   ├── providers.nix   # 内置 provider 预设数据 (镜像 URL SSOT)
 │   └── lib.nix         # URL 解析辅助函数 (resolveAll / resolveFirst / getUrl)
 ├── checks/             # 模块 eval-time 断言数据 (供 flake.nix checks 使用)
+│   ├── mirrors-assertions.nix       # 默认场景断言 (派生自 providers.nix 的 expected)
+│   └── mirrors-assertions-edge.nix  # 边缘场景断言 (5 个: enable-false / custom-provider / override / per-disable / order)
 ├── scripts/            # 辅助脚本
-│   └── verify_mirrors.py  # 镜像 URL 巡检 (可达性 + mirrorz 数据一致性)
+│   └── verify_mirrors.py  # 镜像 URL 巡检 (可达性 + mirrorz 数据一致性, 见 scripts/verify_mirrors.py 头注释)
+├── .github/workflows/  # CI / 定期巡检
+│   ├── ci.yml              # PR / push 跑 just check
+│   └── verify-mirrors.yml  # 每周一 09:00 (UTC+8) 跑 verify-mirrors, 失效开 issue
 ├── example/            # 用户示例 (minimal.nix / advanced.nix)
-├── flake.nix           # flake 入口 (inputs/outputs/devShell/formatter)
+├── flake.nix           # flake 入口 (inputs/outputs/devShell/formatter/checks 工厂)
 ├── justfile            # 开发任务 (just check / just fmt / just update / just verify-mirrors)
 ├── treefmt.nix         # treefmt 配置 (多语言格式化聚合)
 ├── treefmt.toml        # treefmt v2 实际生效配置 (treefmt.nix 仅作 1.x 兼容)
 ├── statix.toml         # statix 规则 (无点前缀, 见 statix.toml 头注释)
-├── pyproject.toml      # Python ruff (lint + format) 配置, 作用于 scripts/
+├── pyproject.toml      # Python ruff (lint + format) 配置, 作用于 scripts/verify_mirrors.py
 ├── README.md           # 对外 README (动机/特性/答谢/快速上手)
 ├── CHANGELOG.md        # 版本变更日志 (Keep a Changelog)
+├── LICENSE             # MIT License
 ├── AGENTS.md           # 本文件 (项目整体规则入口)
 └── .taskmaster/        # Task Master 任务规划数据
 ```
@@ -68,6 +74,4 @@ devShell 的工具链是 SSOT, 新增/移除工具只改 `flake.nix` 的 `devToo
 
 ## License 状态
 
-本项目当前 License: TBD (All Rights Reserved)。
-在 License 确定前, 请勿复制或分发本项目代码; 后续确定后会在单独 commit 中补 LICENSE 文件,
-并同步更新 `README.md` 末尾的 License 标注。
+本项目采用 MIT License, 见根目录 [LICENSE](LICENSE) 文件。

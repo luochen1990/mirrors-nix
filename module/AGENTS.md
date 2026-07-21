@@ -21,8 +21,13 @@ module/
 - **多镜像策略**: 不同软件对多镜像的支持不同, 解析策略也不同
   - 支持多镜像 (nix / docker / goproxy): 收集 preferred list 中**所有**匹配的 provider
   - 仅支持单镜像 (pip / npm / cargo / rustup / huggingface): 取 preferred list 中**第一个**匹配的 provider
+- **两层开关**: 总开关 `mirrors.enable` 是第一道闸; 逐软件 `enable` 是第二道 (二者必须都为 true 才生效)
 - **两层覆盖**: 逐软件 `providers` > 全局 `providers`
+- **内置预设注入**: 内置 provider 预设 (`module/providers.nix`) 在 `config.nix` 中作为模块自身的
+  definition 注入 (`mirrors.providerPresets = builtinPresets`), **不能放在 `option.default`** —
+  那样用户的整段定义会替换 default, 内置预设会全部丢失. 当前写法让模块自身与用户定义一起走标准 module 合并
 - **自定义 provider**: 通过 `mirrors.providerPresets` 添加自定义 provider 或覆盖内置属性 (NixOS module system 自动合并)
+- **拼写守护**: `mirrors.providers` 中拼错的 provider 名会通过 NixOS 标准 assertions 给出明确告警 (而非静默失败)
 - **自定义 URL**: 不在模块内提供; 需要时直接用 NixOS 原生选项 (`environment.variables` / `nix.settings` 等)
 
 ## 支持的软件
