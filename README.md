@@ -19,9 +19,15 @@
 - **10 个内置 provider**: 6 个综合镜像站 (tuna / ustc / aliyun / tencent / bfsu / sjtu) + 4 个专用服务商 (daocloud / hf-mirror / goproxy.cn / goproxy.io)
 - **8 个软件支持**: nix / docker / goproxy / pip / npm / cargo / rustup / huggingface
 - **多镜像策略**: `nix` / `docker` / `goproxy` 收集所有匹配 provider; 其余软件取第一个匹配
+- **两层开关**: 总开关 `mirrors.enable` + 逐软件 `mirrors.<software>.enable` (二者都为 true 才生效)
 - **两层覆盖**: 逐软件 `mirrors.<software>.providers` > 全局 `mirrors.providers`
 - **可扩展**: 通过 `mirrors.providerPresets` 用 NixOS module system 自动合并自定义 provider
+- **拼写守护**: `mirrors.providers` 中拼错的 provider 名会通过 NixOS assertions 给出明确告警 (而非静默失败)
 - **零外部依赖**: 仅依赖 `nixpkgs.lib`, 不引入额外 flake input
+
+> **⚠️ docker 镜像注意**: 国内免费 Docker Hub registry 镜像大多于 2024-06 关停, 目前仅 DaoCloud 仍可用,
+> 但有**限流 (1 MiB/s, 20 req/min, 白名单机制)**, 不适合 CI / 批量拉取场景.
+> 生产环境请考虑自建 registry 或使用云厂商付费服务.
 
 ## 快速上手
 

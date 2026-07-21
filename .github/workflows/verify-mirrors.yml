@@ -1,0 +1,117 @@
+# 镜像 URL 可用性定期巡检
+#
+# 职责边界:
+#   定期 (每周一 09:00 UTC+8) + 手动触发, 跑 just verify-mirrors-quiet.
+#   若发现失效 URL, 自动开 issue 通知维护者.
+#
+# 设计要点:
+# - 用 workflow_dispatch 让维护者随时手动触发 (例如刚改完 providers.nix 想立刻验证)
+# - schedule 用 UTC, 09:00 UTC+8 = 01:00 UTC (周一凌晨跑, 避开工作时段)
+# - 失效时开 issue 而非让 workflow fail (URL 失效是常态, 不应阻塞 master)
+#   (issue 形式更符合"待办事项", 不会让 CI status 一直红)
+# - 若本次巡检全部通过且存在上次的 open issue, 自动关闭之 (避免遗留过期 issue)
+#
+# 维护说明:
+# - 巡检脚本在 scripts/verify_mirrors.py (python), workflow 只负责调度和 issue 管理
+# - issue 标题用固定前缀 "mirror-verify-failed:", 便于后续 dedup/查询
+name: Verify Mirrors
+
+on:
+  schedule:
+    # 每周一 01:00 UTC (= 09:00 UTC+8)
+    - cron: "0 1 * * 1"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Run verify-mirrors (capture output, don't fail)
+        id: verify
+        # 通过 nix develop -c 进 devShell 后跑 just, 与 CI / 本地开发一致 (SSOT: devTools)
+        run: |
+          set +e
+          nix develop -c just verify-mirrors-quiet 2>&1 | tee verify-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Search existing open issue
+        id: search
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'mirror-verify-failed',
+              sort: 'created',
+              direction: 'desc',
+            });
+            core.setOutput('found', issues.length > 0);
+            core.setOutput('number', issues.length > 0 ? issues[0].number : '');
+
+      - name: Open / update issue on failure
+        if: steps.verify.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('verify-output.txt', 'utf8');
+            const date = new Date().toISOString().slice(0, 10);
+            const body = [
+              `**Mirror URL 巡检失败** (${date})`,
+              '',
+              '以下 URL 不可达, 需要更新 `module/providers.nix` 或临时移除该 provider 字段:',
+              '',
+              '```',
+              output,
+              '```',
+              '',
+              '参见 `scripts/verify_mirrors.py` 的判定标准 (2xx/3xx/401/403 视为可达, + mirrorz 数据一致性).',
+            ].join('\n');
+            const number = ${{ steps.search.outputs.number || '0' }};
+            if (number) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `mirror-verify-failed: 镜像 URL 巡检失败 (${date})`,
+                labels: ['mirror-verify-failed'],
+                body,
+              });
+            }
+
+      - name: Close existing issue on success
+        if: steps.verify.outputs.exit_code == '0' && steps.search.outputs.found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const number = ${{ steps.search.outputs.number || '0' }};
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              labels: ['resolved'],
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              state: 'closed',
+            });

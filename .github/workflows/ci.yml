@@ -1,0 +1,45 @@
+# CI: 代码质量验证
+#
+# 职责边界:
+#   在 PR / push 到 master 时, 跑 just check (= deadnix + statix + ruff + nix flake check),
+#   确保模块 eval 断言 (含 5 个边缘场景) 全部通过, 以及 Nix 代码无死代码/反模式.
+#
+# 设计要点:
+# - 用 cachix/install-nix-action (社区主流, 支持 Linux/macOS, 与 flake-fhs 等项目一致)
+# - 不需要 nothing-but-nix (本项目构建量极小, 默认 runner 磁盘足够)
+# - 不开启 cachix 二进制缓存推送 (本项目无对外缓存需求; 仅依赖 cache.nixos.org 默认缓存)
+# - 所有 lint / format / check 工具都封装在 devShell (flake.nix#devTools SSOT),
+#   CI 通过 `nix develop -c just check` 进入 devShell 后再跑 just, 与本地开发完全一致
+#
+# 维护说明:
+# - install-nix-action 大版本 (v31) 应定期手动检查上游 release
+# - 如新增 tools 到 devShell (flake.nix#devTools), 此 workflow 自动跟随无需改动 (SSOT)
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# 同一 PR 的并发 push 取消旧 run, 节省 CI 资源
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      # 通过 nix develop -c 进入 devShell 后跑 just check,
+      # 这样 lint 工具 (deadnix/statix/ruff) 与 just 本身都从 devShell 取得, SSOT.
+      # 本地用户跑 `nix develop` 后直接 `just check`, 与 CI 走的是同一套环境.
+      - name: Run just check (lint + nix flake check) via devShell
+        run: nix develop -c just check
