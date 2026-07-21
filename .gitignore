@@ -1,0 +1,26 @@
+# Nix build artifacts
+result
+result-*
+
+# direnv
+.direnv/
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Task Master
+.taskmaster/
+
+# Node / npm artifacts inherited from template (harmless to keep ignored)
+node_modules/
+.env

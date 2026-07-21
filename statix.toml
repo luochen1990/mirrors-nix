@@ -1,0 +1,25 @@
+# statix 配置: 关闭不适用于本项目的 lint 规则
+#
+# 职责边界:
+#   只声明 disabled / ignore 列表. 不做任何复杂自定义.
+#
+# 关键设计:
+# - disabled 列出在本项目语境下属于噪音的 lint
+# - ignore 列出非项目源码目录 (Task Master 数据, .direnv 等)
+# - ⚠️ 文件名必须是 `statix.toml` (无前导点). statix 默认只查找 statix.toml,
+#   不读取 .statix.toml; 若改名为 .statix.toml 则 disabled 配置会被静默忽略, 故此处保持无点版本.
+#   (参考 nixpkgs 仓内 statix.toml 同样使用无点版本)
+#
+# disabled 说明:
+# - manual_inherit_from (W04): statix 对 `let k = e.<attr> or <default>; in ...` 这类
+#   带 `or` 兜底的表达式会误报为 "应改用 inherit", 但 `inherit` 不支持 `or` 兜底, 此规则在本项目
+#   产生大量误报. module/config.nix#nixKeys 就是典型例子 (k = e.trusted-public-keys or [];
+#   in if k == null then [] else k), 改成 inherit 反而失去 null 处理, 故整体禁用.
+disabled = [
+  "manual_inherit_from",
+]
+
+ignore = [
+  ".direnv",
+  ".taskmaster",
+]

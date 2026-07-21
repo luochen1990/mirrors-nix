@@ -1,0 +1,19 @@
+# treefmt 配置 (treefmt v2 标准 TOML 格式)
+#
+# 职责边界:
+#   仅声明 "用哪些 formatter 格式化哪些文件". treefmt 本身是个 formatter 多路复用器,
+#   主要为编辑器集成 (VSCode/Neovim) 与 CI 一次性格式化服务.
+#
+# 关键设计:
+# - 项目默认 formatter 一致性: 与 flake.nix 的 formatter.<system> = nixpkgs-fmt 保持一致
+#   (见 devShell 注释, devTools 也是 nixpkgs-fmt). 切换 formatter 时三处需同步.
+# - 命令行日常用 `just fmt` (即 nix fmt, 走 flake formatter); treefmt 留给编辑器/CI.
+# - excludes 留空, 但 .taskmaster/ 由 treefmt 自动按 gitignore 跳过 (treefmt walk=auto).
+#
+# 注意: treefmt v2 已不再支持 .nix 配置文件; 树配置见本文件 (./treefmt.toml).
+#       treefmt.nix 仅为兼容历史/编辑器遗留而存在, 已标注废弃.
+project-root-file = "flake.nix"
+
+[formatter.nixpkgs-fmt]
+command = "nixpkgs-fmt"
+includes = ["*.nix"]
