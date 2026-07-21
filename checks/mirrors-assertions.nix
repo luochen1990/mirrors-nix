@@ -115,24 +115,17 @@ in [
 
   # --- goproxy: 多镜像逗号拼接 + direct 兜底 ---
   {
-    label = "GOPROXY contains 'direct' fallback at the end";
+    label = "GOPROXY ends with 'direct' fallback (real URL + direct)";
     expected = "true";
     actual =
-      if goproxy != "" && lib.hasSuffix "direct" goproxy
+      # 至少一个真实 URL + direct 兜底; 未来若新增 goproxy provider, 段数会增加
+      if (builtins.length goproxyParts) >= 2 && lib.hasSuffix "direct" goproxy
       then "true"
       else "false (got '${goproxy}')";
   }
   {
-    label = "GOPROXY contains multiple comma-separated URLs";
-    expected = "true";
-    actual =
-      if (builtins.length goproxyParts) > 1
-      then "true"
-      else "false (got '${goproxy}')";
-  }
-  {
-    label = "GOPROXY starts with tuna goproxy";
-    expected = "https://mirrors.tuna.tsinghua.edu.cn/goproxy";
+    label = "GOPROXY starts with aliyun goproxy (goproxy 仅 aliyun 提供)";
+    expected = "https://mirrors.aliyun.com/goproxy/";
     actual =
       if goproxyParts != []
       then builtins.head goproxyParts

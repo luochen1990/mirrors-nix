@@ -7,6 +7,7 @@
 # - nix (substituters): 收集所有匹配的 provider, 提取 url + trusted-public-keys
 # - docker (registry-mirrors): 收集所有匹配的 provider, 提取 url
 # - goproxy (GOPROXY): 收集所有匹配的 provider, 提取 url, 逗号拼接 + direct 兜底
+#   (各 provider 的实际覆盖情况见 module/providers.nix 头注释)
 # - pip/npm/rustup/huggingface: 取第一个匹配的 provider, 提取 url (单镜像)
 # - cargo: 取第一个匹配的 provider, 通过环境变量设置 (cargo 不读 /etc/ 配置)
 #
@@ -15,6 +16,7 @@
 # - 环境变量在无可用镜像时应不设置, 让软件用官方默认值; 不能用空值或 "direct" 覆盖
 # - Nix `or` 仅在属性缺失时返回默认值; 属性存在但值为 null 时返回 null, 需额外判断
 # - 参考镜像站文档时确认完整配置项, 勿遗漏配套变量 (如 rustup 需同时设 DIST_SERVER + UPDATE_ROOT)
+#   (USTC/SJTU 用 rust-static 目录名, 语义等价; 详见 module/providers.nix 头注释)
 {
   config,
   lib,

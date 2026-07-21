@@ -5,6 +5,7 @@
 # - provider 预设: 每个 provider 只列它实际提供的镜像 (null = 不提供); 数据为 attrset, 支持扩展
 # - preferred list: 有序 provider 列表, 每个软件取列表中第一个/所有提供该镜像的 provider
 # - 多镜像策略: 支持多镜像的软件 (nix/docker/goproxy) 收集所有匹配; 仅支持单镜像的取第一个
+#   (各 provider 的实际覆盖情况见 module/providers.nix 头注释)
 # - 两层覆盖: 逐软件 providers > 全局 providers; 自定义镜像走 NixOS 原生选项
 # - providerPresets 选项: 用户可添加自定义 provider 或覆盖内置属性 (NixOS module system 自动合并)
 #
@@ -88,6 +89,7 @@ in {
           默认关闭: 国内免费 registry 镜像大多已关停 (2024-06), 仅 DaoCloud 仍可用但有限流.
         '';
       };
+
       providers = lib.mkOption {
         type = providerListType;
         default = null;

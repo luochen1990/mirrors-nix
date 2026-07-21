@@ -40,19 +40,22 @@ module/
 
 ## Provider 覆盖矩阵
 
+> 实测于 2026-07-21; 仅保留逐个验证可用的镜像 (URL 见 `providers.nix`)
+
 | 软件 \ Provider | tuna | ustc | aliyun | tencent | bfsu | sjtu | daocloud | hf-mirror |
 | - | - | - | - | - | - | - | - | - |
 | nix | Y | Y | - | - | Y | Y | - | - |
 | pypi | Y | Y | Y | Y | Y | Y | - | - |
 | npm | - | - | Y | - | - | - | - | - |
-| cargo | Y | Y | Y | - | Y | - | - | - |
-| rustup | Y | Y | Y | - | Y | - | - | - |
-| goproxy | Y | Y | Y | Y | Y | Y | - | - |
+| cargo | Y | Y | Y | - | Y | Y | - | - |
+| rustup | Y | Y | Y | - | - | Y | - | - |
+| goproxy | - | - | Y | - | - | - | - | - |
 | docker | - | - | - | - | - | - | Y | - |
 | huggingface | - | - | - | - | - | - | - | Y |
 
 > npm 镜像由阿里云 npmmirror 提供; USTC npm 于 2026-06-12 关停
 > docker 镜像仅 DaoCloud 可用 (有限流); 传统镜像站于 2024-06 关停
+> 其他覆盖异常 (goproxy / rustup rust-static 等) 见 `module/providers.nix` 头注释
 
 ## 用法示例
 

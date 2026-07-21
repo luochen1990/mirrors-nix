@@ -52,16 +52,16 @@ mirrors.enable = true;
 
 本项目的横向配置思路受 [catppuccin/nix](https://github.com/catppuccin/nix) 启发。
 
-镜像数据来自以下镜像站的开源服务 (见 `providers.nix`):
+镜像数据来自以下镜像站长期提供的开源服务 (URL 即本项目 `providers.nix` 中引用的入口, 截至 2026-07-21 均逐个验证可用):
 
-- 清华大学 TUNA 协会 — <https://tuna.tsinghua.edu.cn>
-- 中国科学技术大学 USTC — <https://ustc.edu.cn>
-- 阿里云 (含 npmmirror) — <https://aliyun.com>
-- 腾讯云 — <https://cloud.tencent.com>
-- 北京外国语大学 BFSU — <https://bfsu.edu.cn>
-- 上海交通大学 SJTU — <https://sjtu.edu.cn>
-- DaoCloud — <https://daocloud.io>
-- hf-mirror.com — <https://hf-mirror.com>
+- 清华大学 TUNA 协会 — <https://mirrors.tuna.tsinghua.edu.cn>
+- 中国科学技术大学 USTC — <https://mirrors.ustc.edu.cn>
+- 阿里云 (含 npmmirror / goproxy) — <https://mirrors.aliyun.com>
+- 腾讯云 — <https://mirrors.cloud.tencent.com>
+- 北京外国语大学 BFSU — <https://mirrors.bfsu.edu.cn>
+- 上海交通大学 SJTU — <https://mirror.sjtu.edu.cn>
+- DaoCloud (docker registry 镜像) — <https://docker.m.daocloud.io>
+- hf-mirror.com (HuggingFace 独立镜像) — <https://hf-mirror.com>
 
 **没有这些镜像站长期提供的开源服务, 本项目毫无意义。** 请在享受便利时, 也关注各镜像站的运营状况与公告。
 
