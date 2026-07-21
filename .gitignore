@@ -18,6 +18,10 @@ result-*
 # Logs
 *.log
 
+# Python (巡检脚本 __pycache__)
+__pycache__/
+*.pyc
+
 # Task Master
 .taskmaster/
 

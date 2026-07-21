@@ -1,0 +1,16 @@
+# Python 工具链配置 (ruff lint + format)
+# 仅作用于 scripts/ 下的 Python 代码 (主要脚本是 scripts/verify_mirrors.py).
+
+[lint]
+# 默认启用 E (pycodestyle errors) / F (pyflakes) / W (pycodestyle warnings);
+# 追加 I (isort import 顺序) / B (bugbear 常见陷阱) / UP (pyupgrade 现代化).
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",  # 行长由 formatter 处理, 不强制
+]
+
+[lint.isort]
+known-first-party = ["verify_mirrors"]
+
+[format]
+# 默认使用 double-quote, 与项目内 Python 风格一致
