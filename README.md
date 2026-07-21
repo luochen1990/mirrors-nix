@@ -46,13 +46,13 @@ mirrors.enable = true;
 - [`example/minimal.nix`](example/minimal.nix) — 最简用法
 - [`example/advanced.nix`](example/advanced.nix) — 自定义 provider / 逐软件覆盖
 
-想了解 provider 抽象与两层覆盖逻辑的内部设计, 见 [`module/AGENTS.md`](module/AGENTS.md)。
+想了解 provider 抽象与内部设计, 见 [`module/AGENTS.md`](module/AGENTS.md)。
 
 ## 答谢
 
 本项目的横向配置思路受 [catppuccin/nix](https://github.com/catppuccin/nix) 启发。
 
-镜像数据来自以下镜像站的开源服务 (按 `providers.nix` 中的顺序):
+镜像数据来自以下镜像站的开源服务 (见 `providers.nix`):
 
 - 清华大学 TUNA 协会 — <https://tuna.tsinghua.edu.cn>
 - 中国科学技术大学 USTC — <https://ustc.edu.cn>
@@ -67,4 +67,4 @@ mirrors.enable = true;
 
 ## License
 
-License: TBD (All Rights Reserved).
+License: MIT
