@@ -21,6 +21,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 # 同一 PR 的并发 push 取消旧 run, 节省 CI 资源
 concurrency:
