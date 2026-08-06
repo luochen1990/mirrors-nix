@@ -9,7 +9,7 @@
 # - 期望值与实际值都强制成字符串 (builtins.toString), 用 bash 字符串比较即可
 # - expected 优先派生自 module/providers.nix (SSOT), 避免硬编码 URL 导致双重维护
 #   例: tuna nix substituter URL 直接读 presets.tuna.nix.url, 改 URL 时断言自动跟随
-# - 派生式断言还能守护 config.nix 的解析逻辑 (resolveFirst/resolveAll/mkBefore 顺序等)
+# - 派生式断言还能守护 config.nix 的解析逻辑 (resolveAll/mkBefore 顺序等)
 #
 # 参数 (由 flake.nix 传入):
 #   config: 经 nixosSystem 求值后的 NixOS config attrset

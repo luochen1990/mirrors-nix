@@ -18,7 +18,7 @@ mirrors-nix/
 │   ├── options.nix     # 选项定义 (mirrors.* 系列)
 │   ├── config.nix      # 配置应用 (生成 nix.settings / environment.* 等, 并注入内置 providerPresets)
 │   ├── providers.nix   # 内置 provider 预设数据 (镜像 URL SSOT)
-│   └── lib.nix         # URL 解析辅助函数 (resolveAll / resolveFirst / getUrl)
+│   └── lib.nix         # URL 解析辅助函数 (resolveAll)
 ├── checks/             # 模块 eval-time 断言数据 (供 flake.nix checks 使用)
 │   ├── mirrors-assertions.nix       # 默认场景断言 (派生自 providers.nix 的 expected)
 │   └── mirrors-assertions-edge.nix  # 边缘场景断言 (5 个: enable-false / custom-provider / override / per-disable / order)

@@ -12,6 +12,7 @@
 #   - builtin-override:        用户覆盖内置字段时其他字段是否保持不变
 #   - per-software-disable:    逐软件 enable=false 是否只关停该软件
 #   - substituter-order:       用户自定义 substituters 是否排在镜像之后 (mkBefore)
+#   - entries-readable:        entries option 在 mirrors.enable=false 时仍可读且返回完整未剪裁数据
 #
 # 修复时对应的断言必须加上, 以防回归.
 #
@@ -220,6 +221,53 @@ in {
           if userIdx > 0
           then "true"
           else "false (userIdx=${toString userIdx}, subs=${toString subs})";
+      }
+    ];
+  };
+
+  # 场景 6: entries option 在 mirrors.enable=false 且 mirrors.nix.enable=false 时仍可读,
+  # 且返回完整未剪裁的 entry 列表 (preferred list 中所有匹配 provider).
+  # 这是 selector4nix 等消费者读 entries 的契约: 即使关闭直写下发, 解析数据仍可用.
+  entries-readable = {
+    modules = [
+      {
+        mirrors = {
+          enable = false;          # 关闭直写下发
+          nix.enable = false;      # 双重关闭 nix 直写
+          # aliyun 不提供 nix, 列入 providers 测试 resolveAll 的过滤正确性
+          providers = ["tuna" "bfsu" "aliyun"];
+        };
+      }
+    ];
+    assertions = config: let
+      nixEntries = config.mirrors.nix.entries;
+      entryUrls = map (e: e.url) nixEntries;
+    in [
+      {
+        label = "[entries] enable=false 时 nix.entries 仍非空";
+        expected = "true";
+        actual = if nixEntries != [] then "true" else "false (empty)";
+      }
+      {
+        label = "[entries] nix.entries 包含 tuna 的 url";
+        expected = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store";
+        actual =
+          if builtins.elem "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" entryUrls
+          then "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+          else "<missing> (got ${toString entryUrls})";
+      }
+      {
+        label = "[entries] nix.entries 包含 bfsu 的 url";
+        expected = "https://mirrors.bfsu.edu.cn/nix-channels/store";
+        actual =
+          if builtins.elem "https://mirrors.bfsu.edu.cn/nix-channels/store" entryUrls
+          then "https://mirrors.bfsu.edu.cn/nix-channels/store"
+          else "<missing> (got ${toString entryUrls})";
+      }
+      {
+        label = "[entries] 不提供 nix 的 provider (aliyun) 被正确过滤, entries 恰好 2 项";
+        expected = "2";
+        actual = toString (builtins.length nixEntries);
       }
     ];
   };

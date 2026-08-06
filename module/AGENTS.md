@@ -7,21 +7,19 @@
 ```
 module/
 ├── default.nix   # 模块入口, 仅做 imports 聚合
-├── options.nix   # 选项定义 (mirrors.* 系列)
-├── config.nix    # 配置应用 (根据选项生成 nix.settings / environment.* 等)
+├── options.nix   # 选项定义 (mirrors.* 系列, 含 entries 派生 option)
+├── config.nix    # 配置应用 (entries 计算 + 直写下发到 nix.settings / environment.* 等)
 ├── providers.nix # 内置 provider 预设数据 (tuna/ustc/aliyun/...)
-└── lib.nix       # URL 解析辅助函数 (resolveAll / resolveFirst / getUrl)
+└── lib.nix       # URL 解析辅助函数 (resolveAll)
 ```
 
 
 ## 设计理念
 
 - **provider 预设**: 每个 provider (tuna/ustc/aliyun/...) 只列它实际提供的镜像; `null` = 不提供; 数据为 attrset (至少含 `url`), 支持未来扩展 `trusted-public-keys` 等字段
-- **preferred list**: 有序 provider 列表, 每个软件取列表中第一个/所有提供该镜像的 provider
-- **多镜像策略**: 不同软件对多镜像的支持不同, 解析策略也不同
-  - 支持多镜像 (nix / docker / goproxy): 收集 preferred list 中**所有**匹配的 provider
-  - 仅支持单镜像 (pip / npm / cargo / rustup / huggingface): 取 preferred list 中**第一个**匹配的 provider
-- **两层开关**: 总开关 `mirrors.enable` 是第一道闸; 逐软件 `enable` 是第二道 (二者必须都为 true 才生效)
+- **preferred list**: 有序 provider 列表, 每个 software 的 entries 收集列表中所有匹配的 provider
+- **entries (派生 option)**: 每个 software 有 readOnly 的 `entries` option, 值为 resolveAll 后的完整 entry 列表 (未剪裁). 不受 enable 控制, 始终可读. 消费者 (如 selector4nix 代理) 读 `mirrors.<sw>.entries` 即可拿到解析数据, 无需自己 import lib + resolveAll
+- **两层开关**: 总开关 `mirrors.enable` 是第一道闸; 逐软件 `enable` 是第二道 (二者必须都为 true 才生效, 仅控制直写下发, 不影响 entries 计算)
 - **两层覆盖**: 逐软件 `providers` > 全局 `providers`
 - **内置预设注入**: 内置 provider 预设 (`module/providers.nix`) 在 `config.nix` 中作为模块自身的
   definition 注入 (`mirrors.providerPresets = builtinPresets`), **不能放在 `option.default`** —
@@ -32,16 +30,20 @@ module/
 
 ## 支持的软件
 
-| 软件 | 配置方式 | 多镜像? | 默认启用? | 额外字段 |
-| - | - | - | - | - |
-| nix | `nix.settings.substituters` + `trusted-public-keys` (mkBefore) | 是 | 是 | `trusted-public-keys` |
-| docker | `virtualisation.docker.daemon.settings.registry-mirrors` | 是 | 否 (国内镜像大多已关停) | - |
-| goproxy | `GOPROXY` 环境变量 (逗号拼接 + direct) | 是 | 是 | - |
-| pip | `PIP_INDEX_URL` 环境变量 + `/etc/pip.conf` | 否 | 是 | - |
-| npm | `/etc/npmrc` (registry=) | 否 | 是 | - |
-| cargo | `CARGO_REGISTRIES_CRATES_IO_PROTOCOL` + `CARGO_REGISTRIES_CRATES_IO_INDEX` 环境变量 | 否 | 是 | - |
-| rustup | `RUSTUP_DIST_SERVER` 环境变量 | 否 | 是 | - |
-| huggingface | `HF_ENDPOINT` 环境变量 | 否 | 是 | - |
+| 软件 | 配置方式 (直写) | 多镜像? | 默认启用? | 额外字段 | entries option |
+| - | - | - | - | - | - |
+| nix | `nix.settings.substituters` + `trusted-public-keys` (mkBefore) | 是 | 是 | `trusted-public-keys` | `mirrors.nix.entries` |
+| docker | `virtualisation.docker.daemon.settings.registry-mirrors` | 是 | 否 (国内镜像大多已关停) | - | `mirrors.docker.entries` |
+| goproxy | `GOPROXY` 环境变量 (逗号拼接 + direct) | 是 | 是 | - | `mirrors.goproxy.entries` |
+| pip | `PIP_INDEX_URL` 环境变量 + `/etc/pip.conf` | 否 | 是 | - | `mirrors.pip.entries` |
+| npm | `/etc/npmrc` (registry=) | 否 | 是 | - | `mirrors.npm.entries` |
+| cargo | `CARGO_REGISTRIES_CRATES_IO_PROTOCOL` + `CARGO_REGISTRIES_CRATES_IO_INDEX` 环境变量 | 否 | 是 | - | `mirrors.cargo.entries` |
+| rustup | `RUSTUP_DIST_SERVER` 环境变量 | 否 | 是 | - | `mirrors.rustup.entries` |
+| huggingface | `HF_ENDPOINT` 环境变量 | 否 | 是 | - | `mirrors.huggingface.entries` |
+
+> entries option 始终可读 (不受 enable 控制), 返回 resolveAll 后的完整 entry 列表 (未剪裁).
+> 消费者 (如 selector4nix 代理接管 nix binary cache 下发) 可读 entries + 关闭直写 (mirrors.nix.enable=false),
+> 自行决定 select one / select all 策略.
 
 ## Provider 覆盖矩阵
 
@@ -98,6 +100,21 @@ mirrors.docker.enable = true;
 
 # 关闭某软件
 mirrors.goproxy.enable = false;
+```
+
+### 消费者: 读 entries 自行组装 config (如 selector4nix 代理)
+
+```nix
+# 消费者模块 (如自定义代理模块) 读 entries, 关闭直写下发, 自行组装 config
+{config, lib, ...}: {
+  # 关闭 mirrors 的 nix 直写下发 (避免双写 nix.settings.substituters)
+  mirrors.nix.enable = false;
+
+  # 读 entries 拿到解析后的完整 provider 列表 (未剪裁, 自行决定 select one / select all)
+  services.my-proxy.substituters = map (e: e.url) config.mirrors.nix.entries;
+  nix.settings.trusted-public-keys =
+    lib.flatten (map (e: e.trusted-public-keys or []) config.mirrors.nix.entries);
+}
 ```
 
 ## TODO

@@ -4,6 +4,15 @@
 # 两层开关: 总开关 mirrors.enable 是第一道闸; 逐软件 enable 是第二道 (二者必须都为 true 才生效)
 # 两层覆盖: 逐软件 providers > 全局 providers
 # providerPresets: 内置预设 (providers.nix) 注入到 config (而非 option default), 用户可任意覆盖
+#
+# entries (派生 option): 每个 software 的 entries 是 readOnly, 值为 resolveAll 后的完整 entry 列表
+#   (未剪裁, 应用方自行决定 select one / select all). 不受 enable 控制, 始终可读.
+#   计算所需数据 (providers + providerPresets) 都在 let 中求值, entries 写入是字面量路径, 不触发递归.
+#
+# 直写下发 (nix.settings / environment.variables / environment.etc): 保持改造前逻辑不变 (字面量路径).
+#   消费者若不想用直写下发 (如 selector4nix 代理接管 nix binary cache), 设 mirrors.<sw>.enable = false 即可,
+#   entries 仍可读 (不受 enable 控制).
+#
 # 多镜像策略:
 # - nix (substituters): 收集所有匹配的 provider, 提取 url + trusted-public-keys
 # - docker (registry-mirrors): 收集所有匹配的 provider, 提取 url
@@ -36,32 +45,47 @@
   # 解析生效的 provider 列表: 逐软件 providers 覆盖 > 全局 providers
   effProv = swCfg: if swCfg.providers != null then swCfg.providers else cfg.providers;
 
-  # --- nix: 多镜像, 提取 url + trusted-public-keys ---
-  nixEntries = mlib.resolveAll (effProv cfg.nix) providerPresets "nix";
-  nixUrls = map (e: e.url) nixEntries;
-  # or 仅在属性缺失时返回默认值; 显式 null 需单独处理
-  nixKeys = lib.flatten (map (e: let k = e.trusted-public-keys or []; in if k == null then [] else k) nixEntries);
+  # option 名 → providerPresets 中的 software key (不一致时在此映射, 当前仅 pip option 对应 pypi key)
+  swProviderKey = {
+    nix = "nix";
+    docker = "docker";
+    pip = "pypi";
+    npm = "npm";
+    cargo = "cargo";
+    rustup = "rustup";
+    huggingface = "huggingface";
+    goproxy = "goproxy";
+  };
 
-  # --- docker: 多镜像, 提取 url ---
-  dockerEntries = mlib.resolveAll (effProv cfg.docker) providerPresets "docker";
-  dockerRegistries = map (e: e.url) dockerEntries;
+  # 各 software 的完整 entries (未剪裁, resolveAll 收集所有匹配 provider).
+  # 从 swProviderKey 派生 (key 集合 SSOT), 新增 software 只改 swProviderKey + options.nix 即可.
+  # 同时用于: (1) 写入 readOnly entries option 供消费者读 (2) 直写下发的数据源
+  swEntries = swName: mlib.resolveAll (effProv cfg.${swName}) providerPresets swProviderKey.${swName};
+  allEntries = lib.mapAttrs (name: _: swEntries name) swProviderKey;
 
-  # --- goproxy: 多镜像逗号拼接 + direct 兜底 ---
-  goproxyEntries = mlib.resolveAll (effProv cfg.goproxy) providerPresets "goproxy";
-  goproxyValue = lib.concatStringsSep "," ((map (e: e.url) goproxyEntries) ++ ["direct"]);
+  # --- 直写下发用的派生数据 (从 entries 提取) ---
+  nixUrls = map (e: e.url) allEntries.nix;
+  nixKeys = lib.flatten (map (e: let k = e.trusted-public-keys or []; in if k == null then [] else k) allEntries.nix);
 
-  # --- 单镜像: 取第一个匹配的 entry, 提取 url ---
-  pipUrl = mlib.getUrl (mlib.resolveFirst (effProv cfg.pip) providerPresets "pypi");
-  npmUrl = mlib.getUrl (mlib.resolveFirst (effProv cfg.npm) providerPresets "npm");
-  cargoUrl = mlib.getUrl (mlib.resolveFirst (effProv cfg.cargo) providerPresets "cargo");
-  rustupUrl = mlib.getUrl (mlib.resolveFirst (effProv cfg.rustup) providerPresets "rustup");
-  hfUrl = mlib.getUrl (mlib.resolveFirst (effProv cfg.huggingface) providerPresets "huggingface");
+  dockerRegistries = map (e: e.url) allEntries.docker;
+
+  goproxyValue = lib.concatStringsSep "," ((map (e: e.url) allEntries.goproxy) ++ ["direct"]);
+
+  # 单镜像: 从 entries 取首项 url (entries 为空时返回 null)
+  firstUrl = es: if es == [] then null else (builtins.head es).url or null;
+  pipUrl = firstUrl allEntries.pip;
+  npmUrl = firstUrl allEntries.npm;
+  cargoUrl = firstUrl allEntries.cargo;
+  rustupUrl = firstUrl allEntries.rustup;
+  hfUrl = firstUrl allEntries.huggingface;
 in {
-  # === 注入内置 provider 预设 (作为模块自身的 definition, 与用户定义合并) ===
-  # 用户可通过 mirrors.providerPresets.<name>.<software> 覆盖任意内置字段,
-  # 或添加新的顶层 provider (与内置 tuna/ustc/... 并存).
-  # 关键: 这里不能用 lib.mkForce 或优先级, 否则用户的覆盖会失效.
-  mirrors.providerPresets = builtinPresets;
+  # === 注入内置 provider 预设 + 派生 entries ===
+  # providerPresets: 内置预设作为模块 definition 注入 (与用户定义走 module system 合并)
+  # entries: resolveAll 后的完整列表 (readOnly, 不受 enable 控制), 从 allEntries 派生
+  # 用 mapAttrs 从 allEntries 自动派生 entries 写入, 新增 software 时此处零修改
+  mirrors =
+    (lib.mapAttrs (_: es: {entries = es;}) allEntries)
+    // {providerPresets = builtinPresets;};
 
   # === 拼写检查: 所有 mirrors.providers / mirrors.<software>.providers 引用的 provider 名 ===
   # 必须存在于 providerPresets. 拼错的 provider 名原本会静默返回 null (镜像缺失),
@@ -70,7 +94,7 @@ in {
   # software 列表是本模块 SSOT — 必须与 options.nix 中注册的 software 一致.
   # 拼写错误会通过 cfg.${name}.enable 直接 eval 失败 (fail-fast), 不会被静默吞掉.
   assertions = let
-    softwareNames = ["nix" "docker" "pip" "npm" "cargo" "rustup" "huggingface" "goproxy"];
+    softwareNames = builtins.attrNames swProviderKey;
     # 对每个 software, 求其生效 provider 列表中不在 providerPresets 的项 (仅当该 software 启用时)
     flagged = builtins.filter (x: x.invalid != []) (
       map (
@@ -113,7 +137,7 @@ in {
       CARGO_REGISTRIES_CRATES_IO_PROTOCOL = "sparse";
       CARGO_REGISTRIES_CRATES_IO_INDEX = cargoUrl;
     })
-    (lib.mkIf (cfg.enable && cfg.goproxy.enable && goproxyEntries != []) {GOPROXY = goproxyValue;})
+    (lib.mkIf (cfg.enable && cfg.goproxy.enable && allEntries.goproxy != []) {GOPROXY = goproxyValue;})
     (lib.mkIf (cfg.enable && cfg.huggingface.enable && hfUrl != null) {HF_ENDPOINT = hfUrl;})
   ];
 
