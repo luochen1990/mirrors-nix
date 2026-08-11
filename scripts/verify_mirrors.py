@@ -2,7 +2,7 @@
 """镜像 URL 可用性 + mirrorz 数据一致性巡检.
 
 职责边界:
-  1. 从 module/providers.nix (SSOT) 提取所有 provider.software.url 三元组
+  1. 从 modules/mirrors/providers.nix (SSOT) 提取所有 provider.software.url 三元组
   2. 可达性检测: 对每个 URL 做 HTTP HEAD 探测 (某些 S3-like 后端用 Range-GET 回退)
   3. 一致性检测: 对在 mirrorz 数据库中的 provider, 比对 URL 与 mirrorz 自报路径,
      捕捉悄默路径变更. mirrorz 数据来自 mirrorz-json-legacy (每日 CI 抓取的 git 快照).
@@ -207,13 +207,13 @@ class Colors:
 
 
 def extract_entries_from_providers(project_root: Path) -> list[Entry]:
-    """调用 nix eval --json 从 module/providers.nix 提取所有 entry.
+    """调用 nix eval --json 从 modules/mirrors/providers.nix 提取所有 entry.
 
     providers.nix 是 URL 的 SSOT; 本函数零硬编码, 全部数据由 nix eval 派生.
     entry 可能为 null (类型允许), nix 表达式里加守卫跳过.
     """
     nix_expr = """
-      let presets = import ./module/providers.nix; in
+      let presets = import ./modules/mirrors/providers.nix; in
       builtins.concatLists (
         builtins.attrValues (
           builtins.mapAttrs (provider: swMap:
@@ -237,7 +237,7 @@ def extract_entries_from_providers(project_root: Path) -> list[Entry]:
         )
     except subprocess.CalledProcessError as e:
         print(
-            f"!! nix eval 失败, 检查 module/providers.nix 语法\n{e.stderr}",
+            f"!! nix eval 失败, 检查 modules/mirrors/providers.nix 语法\n{e.stderr}",
             file=sys.stderr,
         )
         sys.exit(2)
@@ -560,12 +560,12 @@ def main() -> int:
     project_root = Path(__file__).resolve().parent.parent
     entries = extract_entries_from_providers(project_root)
     if not entries:
-        print("!! 未从 module/providers.nix 提取到任何 URL", file=sys.stderr)
+        print("!! 未从 modules/mirrors/providers.nix 提取到任何 URL", file=sys.stderr)
         return 2
 
     if not args.quiet:
         print(
-            f"{colors.bold}巡检 {len(entries)} 个 entry (来自 module/providers.nix){colors.reset}"
+            f"{colors.bold}巡检 {len(entries)} 个 entry (来自 modules/mirrors/providers.nix){colors.reset}"
         )
         print()
 

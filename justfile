@@ -1,7 +1,7 @@
 # mirrors-nix 开发任务入口
 # 常用:
 #   just check   一键验证 (lint + nix flake check, 含模块 eval 断言)
-#   just fmt     格式化 (nixpkgs-fmt + ruff format)
+#   just fmt     格式化 (treefmt: nixpkgs-fmt + ruff format)
 #   just update  更新 flake inputs
 #   just show    显示 flake outputs 结构
 #   just verify-mirrors  巡检 providers.nix 中所有镜像 URL 的可达性与一致性
@@ -9,7 +9,7 @@
 # 一键验证: lint (deadnix + statix + ruff) → nix flake check (含模块 eval 断言)
 # 用法: just check
 # 说明: 此目标对应 PR 前的标准验证流程; 在干净 checkout 上应一次通过.
-#       若失败, 优先看 lint 输出和 mirrors-module-eval 的 FAIL 行.
+#       若失败, 优先看 lint 输出和 checks/default 的 FAIL 行.
 check:
     just lint
     nix flake check
@@ -30,10 +30,10 @@ lint:
 
 # 格式化所有文件 (.nix + .py)
 # 用法: just fmt
-# 说明: nix fmt 格式化 .nix 文件; ruff format 格式化 scripts/ 下的 Python 代码.
+# 说明: 引入 flake-fhs 后 formatter = treefmt (treefmt.toml 配置 nixpkgs-fmt + ruff).
+#       nix fmt (= treefmt) 一次性格式化 .nix 和 .py, 无需再单独跑 ruff format.
 fmt:
     nix fmt
-    ruff format .
 
 # 更新 flake inputs
 # 用法: just update
@@ -50,7 +50,7 @@ show:
 
 # 镜像 URL 可达性 + mirrorz 一致性巡检
 # 用法: just verify-mirrors
-# 说明: 从 module/providers.nix (SSOT) 提取所有 url, 执行两类检测:
+# 说明: 从 modules/mirrors/providers.nix (SSOT) 提取所有 url, 执行两类检测:
 #       1. 可达性: 并发 HEAD/Range-GET 探测每个 URL 是否返回 2xx/3xx/401/403
 #       2. 一致性: 对比 mirrorz-json-legacy 数据, 捕捉悄默路径变更
 #       退出码: 0=通过, 1=有 ERROR, 2=脚本/数据错误.

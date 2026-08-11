@@ -71,7 +71,7 @@ jobs:
             const body = [
               `**Mirror URL 巡检失败** (${date})`,
               '',
-              '以下 URL 不可达, 需要更新 `module/providers.nix` 或临时移除该 provider 字段:',
+              '以下 URL 不可达, 需要更新 `modules/mirrors/providers.nix` 或临时移除该 provider 字段:',
               '',
               '```',
               output,

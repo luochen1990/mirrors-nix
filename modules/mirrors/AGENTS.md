@@ -5,12 +5,11 @@
 ## 文件结构
 
 ```
-module/
-├── default.nix   # 模块入口, 仅做 imports 聚合
-├── options.nix   # 选项定义 (mirrors.* 系列, 含 entries 派生 option)
-├── config.nix    # 配置应用 (entries 计算 + 直写下发到 nix.settings / environment.* 等)
-├── providers.nix # 内置 provider 预设数据 (tuna/ustc/aliyun/...)
-└── lib.nix       # URL 解析辅助函数 (resolveAll)
+modules/mirrors/
+├── default.nix       # 模块入口 (flake-fhs 目录模块): options 定义 + 无条件 config (providerPresets 注入 / entries 派生 / 拼写检查)
+├── config.cfg.nix    # 受 mirrors.enable 控制的直写下发 (flake-fhs 自动用 mkIf config.mirrors.enable 包裹)
+├── providers.nix     # 内置 provider 预设数据 (tuna/ustc/aliyun/...)
+└── lib.nix           # URL 解析辅助函数 (resolveAll)
 ```
 
 
@@ -21,7 +20,7 @@ module/
 - **entries (派生 option)**: 每个 software 有 readOnly 的 `entries` option, 值为 resolveAll 后的完整 entry 列表 (未剪裁). 不受 enable 控制, 始终可读. 消费者 (如 selector4nix 代理) 读 `mirrors.<sw>.entries` 即可拿到解析数据, 无需自己 import lib + resolveAll
 - **两层开关**: 总开关 `mirrors.enable` 是第一道闸; 逐软件 `enable` 是第二道 (二者必须都为 true 才生效, 仅控制直写下发, 不影响 entries 计算)
 - **两层覆盖**: 逐软件 `providers` > 全局 `providers`
-- **内置预设注入**: 内置 provider 预设 (`module/providers.nix`) 在 `config.nix` 中作为模块自身的
+- **内置预设注入**: 内置 provider 预设 (`modules/mirrors/providers.nix`) 在 `default.nix` 中作为模块自身的
   definition 注入 (`mirrors.providerPresets = builtinPresets`), **不能放在 `option.default`** —
   那样用户的整段定义会替换 default, 内置预设会全部丢失. 当前写法让模块自身与用户定义一起走标准 module 合并
 - **自定义 provider**: 通过 `mirrors.providerPresets` 添加自定义 provider 或覆盖内置属性 (NixOS module system 自动合并)

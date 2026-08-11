@@ -13,10 +13,16 @@
 # disabled 说明:
 # - manual_inherit_from (W04): statix 对 `let k = e.<attr> or <default>; in ...` 这类
 #   带 `or` 兜底的表达式会误报为 "应改用 inherit", 但 `inherit` 不支持 `or` 兜底, 此规则在本项目
-#   产生大量误报. module/config.nix#nixKeys 就是典型例子 (k = e.trusted-public-keys or [];
+#   产生大量误报. modules/mirrors/config.cfg.nix#nixKeys 就是典型例子 (k = e.trusted-public-keys or [];
 #   in if k == null then [] else k), 改成 inherit 反而失去 null 处理, 故整体禁用.
+# - manual_inherit (W03): statix 对 checks/scope.nix 的嵌套 let 作用域有结构性误报,
+#   会把 `expected = "true"` / `label = "..."` 等字面量赋值都误报为 "应改用 inherit"
+#   (经测试: 移除任一触发点后 statix 会转向报同作用域内的其他字面量赋值).
+#   这是 statix 解析器对深层嵌套 attrset + let 的已知缺陷, 非嵌套结构中同样写法不触发.
+#   checks/scope.nix 的 assertHelpers 被多个场景共享, 无法拆分绕过, 故禁用此规则.
 disabled = [
   "manual_inherit_from",
+  "manual_inherit",
 ]
 
 ignore = [
