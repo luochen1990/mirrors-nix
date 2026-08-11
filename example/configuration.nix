@@ -12,12 +12,12 @@
       # --- 场景 1: 自定义全局 provider 偏好顺序 ---
       # 默认是 ["tuna" "ustc" "aliyun" ... "goproxy-cn" "goproxy-io" ...], 这里改为 ustc 优先, tuna 回退
       # 若引入了自定义 provider (见场景 3), 通常把它放到列表最前
-      providers = ["my-cache" "ustc" "tuna" "aliyun" "tencent" "bfsu" "sjtu" "goproxy-cn" "goproxy-io" "daocloud" "hf-mirror"];
+      providers = [ "my-cache" "ustc" "tuna" "aliyun" "tencent" "bfsu" "sjtu" "goproxy-cn" "goproxy-io" "daocloud" "hf-mirror" ];
 
       # --- 场景 2: 逐软件覆盖 ---
       # 仅 pip 的偏好顺序被覆盖, 其他软件仍继承全局 mirrors.providers
       # 两层覆盖: 逐软件 providers > 全局 providers
-      pip.providers = ["aliyun" "tuna"];
+      pip.providers = [ "aliyun" "tuna" ];
 
       # --- 场景 3: 添加自定义 provider ---
       # 公司内部 cache, 通过 NixOS module system 与内置预设自动合并
@@ -27,16 +27,16 @@
           # nix 支持 trusted-public-keys 等额外字段
           nix = {
             url = "https://my-cache.example.com";
-            trusted-public-keys = ["my-cache-1:abc123def456..."];
+            trusted-public-keys = [ "my-cache-1:abc123def456..." ];
           };
           # pip 走公司内部 PyPI 简单仓库
-          pypi = {url = "https://my-cache.example.com/pypi/simple";};
+          pypi = { url = "https://my-cache.example.com/pypi/simple"; };
         };
       };
 
       # --- 场景 4: 启用非默认软件 / 关闭某软件 ---
-      docker.enable = true;   # docker 默认关闭 (国内免费镜像大多已关停, 仅 DaoCloud 仍可用)
-      cargo.enable = false;   # cargo 默认启用, 这里关闭 (例如走公司内部源 / 直连)
+      docker.enable = true; # docker 默认关闭 (国内免费镜像大多已关停, 仅 DaoCloud 仍可用)
+      cargo.enable = false; # cargo 默认启用, 这里关闭 (例如走公司内部源 / 直连)
     };
   };
 }

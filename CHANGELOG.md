@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/),
 adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Changed
+- **引入 flake-fhs 简化 flake 实现**: flake.nix 从 180 行精简到 ~25 行,
+  所有 outputs (nixosModules/checks/devShells/formatter) 改由 flake-fhs 按目录约定自动生成;
+  module/ → modules/mirrors/, 改造为 flake-fhs 目录模块 (default.nix + config.cfg.nix);
+  checks 从单文件拆为 `checks/<场景>/` 目录 (走 callPackage + scope.nix 注入共享逻辑);
+  formatter 从裸 nixpkgs-fmt 切到 treefmt (treefmt.toml 内部仍配 nixpkgs-fmt + ruff)
+### Removed
+- **flake-utils input**: 被 flake-fhs 替代 (flake-fhs 内部处理 eachSystem)
 
 ## [0.2.0] - 2026-07-21
 ### Fixed

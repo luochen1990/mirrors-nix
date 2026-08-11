@@ -5,15 +5,18 @@
 #   主要为编辑器集成 (VSCode/Neovim) 与 CI 一次性格式化服务.
 #
 # 关键设计:
-# - 项目默认 formatter 一致性: 与 flake.nix 的 formatter.<system> = nixpkgs-fmt 保持一致
-#   (见 devShell 注释, devTools 也是 nixpkgs-fmt). 切换 formatter 时三处需同步.
-# - 命令行日常用 `just fmt` (即 nix fmt, 走 flake formatter); treefmt 留给编辑器/CI.
+# - 引入 flake-fhs 后, formatter.<system> = pkgs.treefmt (flake-fhs 在检测到 treefmt.toml 时选择 treefmt).
+#   `just fmt` (= nix fmt) 走 treefmt, treefmt 内部按本文件配置分发到 nixpkgs-fmt + ruff.
+#   底层 formatter 不变 (仍是 nixpkgs-fmt + ruff), 仅外层 wrapper 从裸 nixpkgs-fmt 切到 treefmt.
+# - treefmt ruff 配置替代了原 `just fmt` 中的 `ruff format .`, 格式化职责统一到 treefmt.
 # - excludes 留空, 但 .taskmaster/ 由 treefmt 自动按 gitignore 跳过 (treefmt walk=auto).
-#
-# 注意: treefmt v2 已不再支持 .nix 配置文件; 树配置见本文件 (./treefmt.toml).
-#       treefmt.nix 仅为兼容历史/编辑器遗留而存在, 已标注废弃.
 project-root-file = "flake.nix"
 
 [formatter.nixpkgs-fmt]
 command = "nixpkgs-fmt"
 includes = ["*.nix"]
+
+[formatter.ruff]
+command = "ruff"
+options = ["format"]
+includes = ["*.py", "*.pyi"]
