@@ -19,18 +19,15 @@ mirrors-nix/
 │       ├── config.cfg.nix    # 受 mirrors.enable 控制的直写下发 (nix.settings / environment.* / docker)
 │       ├── providers.nix     # 内置 provider 预设数据 (镜像 URL SSOT)
 │       └── lib.nix           # URL 解析辅助函数 (resolveAll)
-├── checks/             # 模块 eval-time 断言 (flake-fhs 自动扫描 → checks.<system>.all, 1 个 drv 跑全部 50 个断言)
-│   ├── scope.nix       # 共享 eval/check 基础设施 (mkEvalCheck / evalMirrors / builtinPresets / assertHelpers)
-│   └── all/            # 唯一 check 入口 (package.nix 存在触发封装, scenarios/ 不被扫描)
-│       ├── package.nix       # 数据驱动 eval 7 个场景 + 拼接断言 + 生成 1 个 derivation
-│       └── scenarios/        # 7 个断言数据文件 (被封装, 不被 flake-fhs 扫描)
-│           ├── default.nix             # 默认场景 (mirrors.enable=true 全套默认行为)
-│           ├── enable-false-leak.nix   # 边缘场景: 总开关关闭时零副作用
-│           ├── custom-provider-merge.nix  # 边缘场景: 用户加自定义 provider 时内置 provider 不丢失
-│           ├── builtin-override.nix    # 边缘场景: 覆盖内置 provider 字段时其他字段保持不变
-│           ├── per-software-disable.nix  # 边缘场景: 逐软件 enable=false 只关停该软件
-│           ├── substituter-order.nix   # 边缘场景: mkBefore 让镜像 substituter 排在用户值之前
-│           └── entries-readable.nix    # 边缘场景: entries option 在 enable=false 时仍可读
+├── checks/             # 模块 eval-time 断言 (属性测试, flake-fhs 扫描 → checks.<system>.all)
+│   ├── scope.nix       # 共享 eval/check 基础设施 (mkEvalCheck 三态 / evalMirrors / builtinPresets / assertHelpers)
+│   └── all/            # 唯一 check 入口 (package.nix 触发封装, properties/ 不被扫描)
+│       ├── package.nix       # driver: test-configs × properties 笛卡尔积, 拼接断言, 生成 1 个 drv
+│       ├── software-spec.nix # SSOT: software 名 / provider key / 注入键 (properties forall 遍历的数据源)
+│       └── properties/        # 属性文件: forall software 的不变式 (P ⟹ Q, 三态 skip/check)
+│           ├── no-leak.nix            # 开关精确性: software 关闭 ⟹ 注入项 absent
+│           ├── entries-invariant.nix  # entries 不变性: entries == resolveAll(...) 不受 enable 控制
+│           └── inject-correctness.nix # 直写值正确性: 注入值 ∈ provider URLs
 ├── shells/             # devShell 定义 (flake-fhs 自动扫描 → devShells.<system>.<name>)
 │   └── default.nix     # 默认 devShell (lint / format / lsp / build 工具链 SSOT)
 ├── scripts/            # 辅助脚本

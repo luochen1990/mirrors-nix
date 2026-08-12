@@ -20,9 +20,13 @@
 #   (经测试: 移除任一触发点后 statix 会转向报同作用域内的其他字面量赋值).
 #   这是 statix 解析器对深层嵌套 attrset + let 的已知缺陷, 非嵌套结构中同样写法不触发.
 #   checks/scope.nix 的 assertHelpers 被多个场景共享, 无法拆分绕过, 故禁用此规则.
+# - useless_parens (W08): statix 把字符串插值 `${sw}` 误判为可省略的括号 `(...)`.
+#   这是 statix 对 Nix 字符串插值语法的解析缺陷 (把 ${} 当成 () ).
+#   inject-correctness.nix 的 label "inject/${sw}/${k}: ..." 是最基本的插值用法, 无法绕过.
 disabled = [
   "manual_inherit_from",
   "manual_inherit",
+  "useless_parens",
 ]
 
 ignore = [
