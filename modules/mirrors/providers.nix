@@ -18,6 +18,7 @@
     pypi = { url = "https://pypi.tuna.tsinghua.edu.cn/simple"; };
     cargo = { url = "https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/"; };
     rustup = { url = "https://mirrors.tuna.tsinghua.edu.cn/rustup"; };
+    hackage = { url = "https://mirrors.tuna.tsinghua.edu.cn/hackage/"; };
   };
 
   # 中科大 USTC
@@ -26,6 +27,7 @@
     pypi = { url = "https://pypi.mirrors.ustc.edu.cn/simple"; };
     cargo = { url = "https://mirrors.ustc.edu.cn/crates.io-index/"; };
     rustup = { url = "https://mirrors.ustc.edu.cn/rust-static"; };
+    hackage = { url = "https://mirrors.ustc.edu.cn/hackage/"; };
   };
 
   # 阿里云 (npmmirror 即阿里旗下服务)
@@ -39,6 +41,7 @@
   # 腾讯云
   tencent = {
     pypi = { url = "https://mirrors.cloud.tencent.com/pypi/simple"; };
+    hackage = { url = "https://mirrors.cloud.tencent.com/hackage/"; };
   };
 
   # 北外 BFSU
@@ -46,6 +49,7 @@
     nix = { url = "https://mirrors.bfsu.edu.cn/nix-channels/store"; };
     pypi = { url = "https://mirrors.bfsu.edu.cn/pypi/web/simple"; };
     cargo = { url = "https://mirrors.bfsu.edu.cn/crates.io-index/"; };
+    hackage = { url = "https://mirrors.bfsu.edu.cn/hackage/"; };
   };
 
   # 上海交大 SJTU

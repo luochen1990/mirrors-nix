@@ -37,6 +37,8 @@
       # --- 场景 4: 启用非默认软件 / 关闭某软件 ---
       docker.enable = true; # docker 默认关闭 (国内免费镜像大多已关停, 仅 DaoCloud 仍可用)
       cargo.enable = false; # cargo 默认启用, 这里关闭 (例如走公司内部源 / 直连)
+      # cabal 默认关闭: 系统级 CABAL_CONFIG 会整文件遮蔽 ~/.cabal/config, 无用户级 cabal 定制时才建议开启
+      # cabal.enable = true;
     };
   };
 }

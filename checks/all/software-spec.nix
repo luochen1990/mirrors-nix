@@ -52,6 +52,13 @@ let
       providerKey = "goproxy";
       envKeys = [ "GOPROXY" ];
     };
+    cabal = {
+      providerKey = "hackage";
+      # CABAL_CONFIG 值是文件指针 (→ /etc/cabal/config), 不是 URL; URL 语义由 etcKeys 的 config 文件承载
+      envKeys = [ "CABAL_CONFIG" ];
+      filePointerEnvKeys.CABAL_CONFIG = "cabal/config";
+      etcKeys = [ "cabal/config" ];
+    };
   };
 
   fillDefault = s: {
@@ -60,9 +67,21 @@ let
     etcKeys = s.etcKeys or [ ];
     specialKeys = s.specialKeys or [ ];
     nonUrlEnvKeys = s.nonUrlEnvKeys or [ ];
+    # 文件指针型 env 键: env 键 → 其值应指向的 etc 文件 (相对 /etc/ 路径)
+    # inject-correctness 对这类键断言 值 == "/etc/" + 目标 etc 路径 (而非包含某个 URL)
+    filePointerEnvKeys = s.filePointerEnvKeys or { };
   };
+
+  filled = builtins.mapAttrs (_: fillDefault) specs;
+
+  # eval-time 自检: 文件指针的目标必须是该软件声明的 etc 键,
+  # 否则 checkEtc 遍历不到目标文件, 指针会指向从未下发的文件 (绿灯假阳性)
+  pointerTargetsDeclared =
+    builtins.all
+      (s: builtins.all (target: builtins.elem target s.etcKeys) (builtins.attrValues s.filePointerEnvKeys))
+      (builtins.attrValues filled);
 in
-{
-  specs = builtins.mapAttrs (_: fillDefault) specs;
+assert pointerTargetsDeclared || builtins.throw "software-spec: filePointerEnvKeys 的目标未在同名 spec 的 etcKeys 中声明"; {
+  specs = filled;
   allSoftware = builtins.attrNames specs;
 }

@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/),
 adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Added
+- **cabal (Hackage) 镜像支持**: 新增 `mirrors.cabal` (provider key `hackage`),
+  tuna / ustc / bfsu / tencent 四家内置镜像; 通过 `CABAL_CONFIG` + `/etc/cabal/config`
+  (repository 块) 下发, 默认关闭 — cabal 无级联配置, 系统级下发会整文件遮蔽用户自己的
+  cabal 配置; 有用户级 cabal 配置者请保持关闭并自行引用 `mirrors.cabal.entries`.
+  repository 块不 pin root-keys: Hackage 官方 root key 已轮换 (root.json v8),
+  镜像站文档的旧 key 列表会导致验签失败, 省略 root-keys 走 cabal 官方 bootstrap 模式.
 ### Changed
 - **引入 flake-fhs 简化 flake 实现**: flake.nix 从 180 行精简到 ~25 行,
   所有 outputs (nixosModules/checks/devShells/formatter) 改由 flake-fhs 按目录约定自动生成;

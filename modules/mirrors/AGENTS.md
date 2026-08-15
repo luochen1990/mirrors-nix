@@ -39,6 +39,18 @@ modules/mirrors/
 | cargo | `CARGO_REGISTRIES_CRATES_IO_PROTOCOL` + `CARGO_REGISTRIES_CRATES_IO_INDEX` 环境变量 | 否 | 是 | - | `mirrors.cargo.entries` |
 | rustup | `RUSTUP_DIST_SERVER` 环境变量 | 否 | 是 | - | `mirrors.rustup.entries` |
 | huggingface | `HF_ENDPOINT` 环境变量 | 否 | 是 | - | `mirrors.huggingface.entries` |
+| cabal | `CABAL_CONFIG` 环境变量 + `/etc/cabal/config` (repository 块) | 否 | 否 (见下) | - | `mirrors.cabal.entries` |
+
+> cabal 默认关闭的原因: cabal 只读单一 config 文件, 无级联/include 机制.
+> 发现顺序 (cabal-install 3.16 实测): `--config-file` > `$CABAL_CONFIG` >
+> `$CABAL_DIR/config` > `~/.config/cabal/config` (XDG) > `~/.cabal/config` (legacy);
+> XDG 与 legacy 并存时 cabal 警告并取 XDG.
+> 系统级下发 `CABAL_CONFIG=/etc/cabal/config` 会**整文件遮蔽**用户自己的 cabal 配置
+> (不只是 repository 段, jobs/profiling 等所有定制全部失效).
+> 因此默认关闭, 需要的用户显式开启; 有用户级 cabal 配置的用户应保持关闭并自行引用 entries.
+> repository 块不写 root-keys: Hackage 官方 root key 已轮换 (root.json v8, 2026-08 验证),
+> 镜像站文档的旧 key 列表 pin 进去会验签失败; 省略 root-keys 是 cabal 允许的 bootstrap 模式
+> (首次 update 不验签 root.json, 之后 TUF 全程验证, 镜像走 HTTPS).
 
 > entries option 始终可读 (不受 enable 控制), 返回 resolveAll 后的完整 entry 列表 (未剪裁).
 > 消费者 (如 selector4nix 代理接管 nix binary cache 下发) 可读 entries + 关闭直写 (mirrors.nix.enable=false),
@@ -46,7 +58,7 @@ modules/mirrors/
 
 ## Provider 覆盖矩阵
 
-> 实测于 2026-07-21; 仅保留逐个验证可用的镜像 (URL 见 `providers.nix`)
+> 实测于 2026-08-15; 仅保留逐个验证可用的镜像 (URL 见 `providers.nix`)
 
 | 软件 \ Provider | tuna | ustc | aliyun | tencent | bfsu | sjtu | daocloud | hf-mirror | goproxy-cn | goproxy-io |
 | - | - | - | - | - | - | - | - | - | - | - |
@@ -56,11 +68,14 @@ modules/mirrors/
 | cargo | Y | Y | Y | - | Y | Y | - | - | - | - |
 | rustup | Y | Y* | Y | - | - | Y* | - | - | - | - |
 | goproxy | - | - | - | - | - | - | - | - | Y | Y |
+| hackage | Y | Y | - | Y | Y* | - | - | - | - | - |
 | docker | - | - | - | - | - | - | Y | - | - | - |
 | huggingface | - | - | - | - | - | - | - | Y | - | - |
 
-> `Y*` rustup URL 各站命名不一: USTC/SJTU 叫 `/rust-static` (镜像 static.rust-lang.org 全站),
-> TUNA/aliyun 叫 `/rustup` (只镜像 rustup 子目录); 不能假设统一前缀
+> `Y*` 各站命名/形态差异:
+> - rustup: USTC/SJTU 叫 `/rust-static` (镜像 static.rust-lang.org 全站),
+>   TUNA/aliyun 叫 `/rustup` (只镜像 rustup 子目录); 不能假设统一前缀
+> - hackage: BFSU 是 302 重定向到 TUNA (同源内容); SJTU/aliyun 无此镜像 (404)
 >
 > npm 镜像由阿里云 npmmirror 提供; USTC npm 于 2026-06-12 关停
 >
@@ -96,6 +111,9 @@ mirrors.providerPresets.tuna.pypi = { url = "https://new-pypi-url.com/simple"; }
 
 # 启用 docker (默认关闭)
 mirrors.docker.enable = true;
+
+# 启用 cabal (默认关闭, 原因: CABAL_CONFIG 会整文件遮蔽用户自己的 cabal 配置)
+mirrors.cabal.enable = true;
 
 # 关闭某软件
 mirrors.goproxy.enable = false;

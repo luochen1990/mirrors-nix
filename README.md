@@ -1,6 +1,6 @@
 # mirrors-nix
 
-> 一个 NixOS flake 模块, 把"镜像站" (provider) 与"软件" (software) 正交分离, 一处声明偏好顺序, 统一配置 nix / pip / npm / cargo / rustup / goproxy / docker / huggingface 等常用镜像源。
+> 一个 NixOS flake 模块, 把"镜像站" (provider) 与"软件" (software) 正交分离, 一处声明偏好顺序, 统一配置 nix / pip / npm / cargo / rustup / goproxy / docker / huggingface / cabal (Hackage) 等常用镜像源。
 
 ## 为什么需要它
 
@@ -44,7 +44,7 @@ inputs.mirrors-nix.nixosModules.default
 mirrors.enable = true;
 ```
 
-> **启用规则**: 对于支持指定多个镜像站的软件 (nix / docker / goproxy), mirrors-nix 会把已启用镜像站中所有兼容的条目都加入软件源列表; 对于只支持单镜像站的软件 (pip / npm / cargo / rustup / huggingface), 则取列表中首个兼容的镜像站。
+> **启用规则**: 对于支持指定多个镜像站的软件 (nix / docker / goproxy), mirrors-nix 会把已启用镜像站中所有兼容的条目都加入软件源列表; 对于只支持单镜像站的软件 (pip / npm / cargo / rustup / huggingface / cabal), 则取列表中首个兼容的镜像站。
 
 需要更细粒度的控制时:
 
@@ -88,6 +88,8 @@ mirrors.providers = ["my-cache" "ustc" "tuna"];
 各 provider 的镜像覆盖状况可通过 [mirrorz](https://mirrorz.org) 一站式查询; 本项目的 URL 巡检脚本 (`scripts/verify_mirrors.py`) 也以 mirrorz 数据为一致性基准。**没有这些镜像站长期提供的开源服务, 本项目毫无意义。**
 
 > **docker 提示**: 国内免费 Docker Hub registry 镜像大多于 2024-06 关停, 目前仅 DaoCloud 仍可用且有限流 (1 MiB/s, 20 req/min), 故 `mirrors.docker.enable` 默认关闭。生产环境建议自建 registry 或使用云厂商付费服务。
+>
+> **cabal 提示**: cabal 只读单一配置文件且无级联机制, 系统级下发 (`CABAL_CONFIG=/etc/cabal/config`) 会整文件遮蔽你自己的 `~/.cabal/config`。故 `mirrors.cabal.enable` 默认关闭; 若你没有任何用户级 cabal 定制, 可放心开启。
 
 ## License
 

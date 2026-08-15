@@ -8,8 +8,11 @@
 # - nix (substituters): 收集所有匹配的 provider, 提取 url + trusted-public-keys
 # - docker (registry-mirrors): 收集所有匹配的 provider, 提取 url
 # - goproxy (GOPROXY): 收集所有匹配的 provider, 提取 url, 逗号拼接 + direct 兜底
-# - pip/npm/rustup/huggingface: 取第一个匹配的 provider, 提取 url (单镜像)
+# - pip/npm/rustup/huggingface/cabal: 取第一个匹配的 provider, 提取 url (单镜像)
 # - cargo: 取第一个匹配的 provider, 通过环境变量设置 (cargo 不读 /etc/ 配置)
+#
+# cabal 特殊性: CABAL_CONFIG 遮蔽式下发 (默认关闭) + repository 块不 pin root-keys;
+# 完整原因与实测细节见 modules/mirrors/AGENTS.md "cabal 默认关闭的原因"
 #
 # 易出错点:
 # - 新增软件前先确认其配置文件搜索路径 (不是所有软件都读 /etc/, 如 cargo 只读 $CARGO_HOME)
@@ -35,6 +38,10 @@ let
   cargoUrl = firstUrl cfg.cargo.entries;
   rustupUrl = firstUrl cfg.rustup.entries;
   hfUrl = firstUrl cfg.huggingface.entries;
+  cabalUrl = firstUrl cfg.cabal.entries;
+
+  # cabal env 指针与 etc 下发路径的配对 SSOT (模块侧; checks 侧由 filePointerEnvKeys 守护)
+  cabalConfigEtc = "cabal/config";
 in
 {
   # === Nix binary cache (多镜像, mkBefore 提高优先级) ===
@@ -60,9 +67,11 @@ in
     })
     (lib.mkIf (cfg.goproxy.enable && cfg.goproxy.entries != [ ]) { GOPROXY = goproxyValue; })
     (lib.mkIf (cfg.huggingface.enable && hfUrl != null) { HF_ENDPOINT = hfUrl; })
+    # cabal: 遮蔽式下发, 默认关闭 (见文件头注释)
+    (lib.mkIf (cfg.cabal.enable && cabalUrl != null) { CABAL_CONFIG = "/etc/${cabalConfigEtc}"; })
   ];
 
-  # === 配置文件 (pip / npm) ===
+  # === 配置文件 (pip / npm / cabal) ===
   environment.etc = lib.mkMerge [
     (lib.mkIf (cfg.pip.enable && pipUrl != null) {
       "pip.conf".text = ''
@@ -74,6 +83,14 @@ in
     (lib.mkIf (cfg.npm.enable && npmUrl != null) {
       "npmrc".text = ''
         registry=${npmUrl}
+      '';
+    })
+
+    (lib.mkIf (cfg.cabal.enable && cabalUrl != null) {
+      "${cabalConfigEtc}".text = ''
+        repository mirror
+          url: ${cabalUrl}
+          secure: True
       '';
     })
   ];

@@ -107,6 +107,16 @@ let
         };
       }
     ];
+
+    # cabal 默认关闭 (CABAL_CONFIG 遮蔽用户配置), 显式启用以覆盖注入
+    cabal-enabled = [
+      {
+        mirrors = {
+          enable = true;
+          cabal.enable = true;
+        };
+      }
+    ];
   };
 
   # 笛卡尔积: 每个 config × 每个 property → 断言 list → 拼接

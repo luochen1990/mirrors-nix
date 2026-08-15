@@ -23,11 +23,11 @@ mirrors-nix/
 │   ├── scope.nix       # 共享 eval/check 基础设施 (mkEvalCheck 三态 / evalMirrors / builtinPresets / assertHelpers)
 │   └── all/            # 唯一 check 入口 (package.nix 触发封装, properties/ 不被扫描)
 │       ├── package.nix       # driver: test-configs × properties 笛卡尔积, 拼接断言, 生成 1 个 drv
-│       ├── software-spec.nix # SSOT: software 名 / provider key / 注入键 (properties forall 遍历的数据源)
+│       ├── software-spec.nix # SSOT: software 名 / provider key / 注入键 (含文件指针型) (properties forall 遍历的数据源)
 │       └── properties/        # 属性文件: forall software 的不变式 (P ⟹ Q, 三态 skip/check)
 │           ├── no-leak.nix            # 开关精确性: software 关闭 ⟹ 注入项 absent
 │           ├── entries-invariant.nix  # entries 不变性: entries == resolveAll(...) 不受 enable 控制
-│           └── inject-correctness.nix # 直写值正确性: 注入值 ∈ provider URLs
+│           └── inject-correctness.nix # 直写值正确性: 注入值 ∈ provider URLs 或 == 文件指针 (/etc/...)
 ├── shells/             # devShell 定义 (flake-fhs 自动扫描 → devShells.<system>.<name>)
 │   └── default.nix     # 默认 devShell (lint / format / lsp / build 工具链 SSOT)
 ├── scripts/            # 辅助脚本

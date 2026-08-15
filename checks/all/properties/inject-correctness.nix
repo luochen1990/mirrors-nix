@@ -9,7 +9,8 @@
 #   - env 键: 环境变量值包含某个 entry URL (兼容 goproxy 逗号拼接、rustup 后缀)
 #   - etc 键: 配置文件 text 包含某个 entry URL
 #   - special 键 (nix substituters / docker registry-mirrors): 每个 URL ∈ entry URLs
-# 非 URL 的注入值 (如 cargo PROTOCOL=sparse) 从 spec 的 nonUrlEnvKeys 跳过.
+#   - 文件指针型 env 键: 值 == "/etc/" + 指定的 etc 文件路径 (如 CABAL_CONFIG → /etc/cabal/config)
+# 非 URL 的注入值从 spec 的 nonUrlEnvKeys 跳过; 文件指针型键由 filePointerEnvKeys 精确断言.
 #
 # 三态编码:
 #   P=true  (sw 启用且有 entries): 正常检查 Q
@@ -37,13 +38,28 @@ let
     let urls = entryUrls sw; in
     builtins.any (u: lib.hasInfix u value) urls;
 
-  # env 键检查: 值包含 entry URL (跳过 nonUrlEnvKeys)
+  # env 键检查: 值包含 entry URL (文件指针型键精确断言; 其余非 URL 值跳过)
   checkEnv = sw: k:
     let
       s = specs.${sw};
       actual = env.${k} or null;
+      # 文件指针型: 值必须精确等于 /etc/<etcKey> (配对一致性, 防止 env 指向不存在的文件)
+      pointerTarget = s.filePointerEnvKeys.${k} or null;
+      pointerValue = "/etc/${pointerTarget}";
     in
-    if builtins.elem k s.nonUrlEnvKeys then
+    if pointerTarget != null then
+      {
+        label = "inject/${sw}/${k}: env 值 == ${pointerValue}";
+        expected = pointerValue;
+        actual =
+          if actual == null then
+            "false (key not set)"
+          else if actual == pointerValue then
+            actual
+          else
+            "false (got ${actual})";
+      }
+    else if builtins.elem k s.nonUrlEnvKeys then
       mkSkip "inject/${sw}/${k} (non-URL value)"
     else
       {

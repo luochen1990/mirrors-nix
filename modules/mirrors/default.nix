@@ -60,7 +60,7 @@ let
   # 解析生效的 provider 列表: 逐软件 providers 覆盖 > 全局 providers
   effProv = swCfg: if swCfg.providers != null then swCfg.providers else cfg.providers;
 
-  # option 名 → providerPresets 中的 software key (不一致时在此映射, 当前仅 pip option 对应 pypi key)
+  # option 名 → providerPresets 中的 software key (不一致时在此映射: pip→pypi, cabal→hackage)
   swProviderKey = {
     nix = "nix";
     docker = "docker";
@@ -70,6 +70,7 @@ let
     rustup = "rustup";
     huggingface = "huggingface";
     goproxy = "goproxy";
+    cabal = "hackage";
   };
 
   # 各 software 的完整 entries (未剪裁, resolveAll 收集所有匹配 provider).
@@ -113,7 +114,7 @@ in
     };
 
     # --- 各 software ---
-    # 注: pip option 对应 pypi provider key; 其余 option 名与 provider key 一致 (映射见 swProviderKey)
+    # 注: pip/cabal 的 option 名与 provider key 不一致 (pypi/hackage, 映射见 swProviderKey); 其余一致
     nix = mkSoftwareOpts {
       displayName = "Nix binary cache";
       enableDescription = "启用 Nix binary cache 镜像 (substituters + trusted-public-keys), 使用 mkBefore 提高优先级";
@@ -132,6 +133,17 @@ in
     rustup = mkSoftwareOpts { displayName = "rustup (Rust 工具链)"; };
     huggingface = mkSoftwareOpts { displayName = "HuggingFace (HF_ENDPOINT)"; };
     goproxy = mkSoftwareOpts { displayName = "Go module proxy (GOPROXY)"; };
+    cabal = mkSoftwareOpts {
+      displayName = "cabal (Haskell Hackage)";
+      defaultEnable = false;
+      enableDescription = ''
+        启用 Hackage 镜像 (cabal).
+        默认关闭: cabal 无级联配置, 本模块通过 CABAL_CONFIG=/etc/cabal/config 下发,
+        会**整文件遮蔽**用户自己的 ~/.cabal/config 或 ~/.config/cabal/config
+        (用户级 cabal 定制全部失效, 不止 repository 段).
+        若你有用户级 cabal 配置, 建议保持关闭并自行在用户配置中引用 mirrors.cabal.entries.
+      '';
+    };
   };
 
   # === 无条件 config (始终生效, 不受 mirrors.enable 控制) ===
