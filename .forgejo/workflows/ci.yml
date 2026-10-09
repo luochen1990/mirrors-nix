@@ -1,0 +1,7 @@
+# form: none (本仓有意不接入 org CI — GitHub 主跑双宿仓, CI 在 GitHub 侧;
+# 见 forgejo-actions README「形态豁免」)
+# 形态契约: 合法 workflow + 仅 workflow_dispatch 手动触发 — 纯注释/null YAML 会被
+# forgejo 判 invalid workflow (全事件触发 + run 即红, v16 实测); 文件存在即占位,
+# 停止 forgejo 解析 .github/workflows
+on: workflow_dispatch
+jobs: {}

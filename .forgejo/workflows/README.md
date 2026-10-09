@@ -9,11 +9,19 @@ Forgejo 解析 workflow 时按 `.forgejo/workflows` > `.gitea/workflows` >
 见 forgejo v15 源码 `modules/actions/workflows.go` `ListWorkflows` 的短路逻辑;
 上游语义确认: forgejo#9203 — `.github/workflows` 解析仅为迁移兼容 shim)。
 
-本目录 (含本 README, 非 .yml 不被识别为 workflow) 的存在使 forgejo 只扫这里
-(空) 而不再解析 `.github/workflows/` — 消除 Forgejo Actions 对 GitHub 专属
-字段 (如 job 级 `permissions`) 的"不支持"警告, 也不再产生无 runner 可跑的死
+本目录的存在使 forgejo 只扫这里 (README 非 .yml, 不被识别为 workflow) 而
+不再解析 `.github/workflows/` — 消除 Forgejo Actions 对 GitHub 专属字段
+(如 job 级 `permissions`) 的"不支持"警告, 也不再产生无 runner 可跑的死
 run (org runner 无 `ubuntu-latest` label)。GitHub 侧不受任何影响 (GitHub 不
 读 `.forgejo/` 目录)。
 
-未来若需 forgejo 侧 CI: 直接在此目录放置 workflow yml 即可 (注意此时
-`.github/workflows/` 对 forgejo 已整体失效, 双宿双跑需两侧文件分别维护)。
+占位实体是 `ci.yml` — `form: none` 豁免标记 (forgejo-actions 豁免制巡检的
+形态契约, 本仓有意不接入 org CI; 语义见 forgejo-actions README「形态豁免」)。
+形态须为**合法空 workflow**: 标记注释头 + `on: workflow_dispatch` +
+`jobs: {}`。勿用纯注释文件 — null YAML 会被 forgejo 判 invalid workflow,
+全事件触发且 run 即红 (v16 实测, PR #4 首版即踩此坑); 合法形态下自动事件
+不匹配触发器, 零 run。
+
+未来若需 forgejo 侧 CI: 将 `ci.yml` 改写为真实 workflow 并移除豁免标记
+(`form: none` 是全仓豁免语义, 与接入互斥; 注意此时 `.github/workflows/` 对
+forgejo 已整体失效, 双宿双跑需两侧文件分别维护)。
