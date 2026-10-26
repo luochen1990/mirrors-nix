@@ -449,13 +449,11 @@ def _urls_consistent(a: str, b: str) -> bool:
     """双向前缀匹配: a 以 b 为前缀, 或 b 以 a 为前缀, 或两者规范化后相等."""
     na = _normalize_url(a)
     nb = _normalize_url(b)
-    if na == nb:
-        return True
-    if na.startswith(nb.rstrip("/") + "/"):
-        return True
-    if nb.startswith(na.rstrip("/") + "/"):
-        return True
-    return False
+    return (
+        na == nb
+        or na.startswith(nb.rstrip("/") + "/")
+        or nb.startswith(na.rstrip("/") + "/")
+    )
 
 
 # === 报告 ===

@@ -1,7 +1,10 @@
 # Python 工具链配置 (ruff lint + format)
-# 仅作用于 scripts/ 下的 Python 代码 (主要脚本是 scripts/verify_mirrors.py).
+# 作用于全仓 Python 代码 (当前仅 scripts/verify_mirrors.py, .taskmaster/ 由 gitignore 跳过).
+#
+# 坑: pyproject.toml 中 ruff 配置必须挂在 [tool.ruff.*] 段下; 顶层 [lint] 是独立 ruff.toml
+# 文件的语法, 在此被 ruff 静默忽略并回退默认规则集 (防复发哨兵见 justfile lint).
 
-[lint]
+[tool.ruff.lint]
 # 默认启用 E (pycodestyle errors) / F (pyflakes) / W (pycodestyle warnings);
 # 追加 I (isort import 顺序) / B (bugbear 常见陷阱) / UP (pyupgrade 现代化).
 select = ["E", "F", "W", "I", "B", "UP"]
@@ -9,8 +12,8 @@ ignore = [
     "E501",  # 行长由 formatter 处理, 不强制
 ]
 
-[lint.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["verify_mirrors"]
 
-[format]
+[tool.ruff.format]
 # 默认使用 double-quote, 与项目内 Python 风格一致

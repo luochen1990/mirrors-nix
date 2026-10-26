@@ -20,12 +20,16 @@ check:
 #       deadnix --fail 在发现未使用绑定时返回非 0.
 #       statix check . 按 statix.toml 配置的规则扫描全仓 (注意文件名无前导点, 见 statix.toml 头注释).
 #       ruff check 扫描 scripts/ 下的 Python 代码, 规则见 pyproject.toml.
+#       ruff 前置哨兵: E731 须真的被启用 — 它在 select 的 E 族内, 又不在 ruff 0.16+ 默认集
+#       (I001 等直觉候选已在默认集, 换哨兵规则时须保持这两点), 防止 pyproject.toml 段名写错
+#       时 ruff 静默回退默认规则集 (曾因此 CI red 6 周无人察觉).
 lint:
     @echo "Running deadnix..."
     find . -name '*.nix' -not -path './.taskmaster/*' -print -exec deadnix --fail {} +
     @echo "Running statix..."
     statix check .
     @echo "Running ruff (python lint)..."
+    @ruff check --show-settings . | grep -qF 'E731' || { echo "ERROR: ruff 哨兵失败: [tool.ruff.lint] 配置未生效 (段名写错?), 或 ruff --show-settings 输出格式变更"; exit 1; }
     ruff check .
 
 # 格式化所有文件 (.nix + .py)
